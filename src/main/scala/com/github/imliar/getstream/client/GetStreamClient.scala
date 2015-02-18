@@ -9,7 +9,7 @@ import org.jboss.netty.handler.codec.http.{HttpResponse, HttpRequest}
  * Basic trait for GetStream client.
  * Single instance of GetStreamClient could be used just like a HTTP client
  */
-trait GetStreamClient {
+trait GetStreamClient { self: GetStreamFeedFactoryComponent =>
   /**
    * API key for getstream app
    */
@@ -38,18 +38,22 @@ case class GetStreamClientImpl(
                             apiKey: String,
                             apiSecret: String,
                             apiVersion: String
-                            )(httpClient: Service[HttpRequest, HttpResponse], httpTimeout: Duration) extends GetStreamClient {
+                            )(httpClient: Service[HttpRequest, HttpResponse], httpTimeout: Duration)
+  extends GetStreamClient with GetStreamFeedFactoryDefaultComponent {
 
-  private val signer = GetStreamSign(apiKey)
 
   /**
    * Get feed with specified slug/id. Token will be created if not provided.
    */
-  override def feed(feedSlug: String, id: String, tokenOpt: Option[String]): GetStreamFeed = {
-    val token = tokenOpt match {
-      case Some(str) => str
-      case _ => signer.signature(feedSlug + id)
+  override def feed(feedSlug: String, feedId: String, tokenOpt: Option[String]): GetStreamFeed = {
+    tokenOpt match {
+      case Some(token) => feedFactory.feed(apiKey, apiVersion, feedSlug, feedId, token)(httpClient, httpTimeout)
+      case _ => feedFactory.feed(apiKey, apiVersion, feedSlug, feedId)(httpClient, httpTimeout)
     }
-    GetStreamFeed(client = this, feedSlug = feedSlug, feedId = id, token = token, apiKey = apiKey)(httpClient, httpTimeout)
   }
+
+  /**
+   * Signer for tokens
+   */
+  override val signer: GetStreamSign = new GetStreamSign(apiSecret)
 }

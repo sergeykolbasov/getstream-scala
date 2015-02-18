@@ -2,8 +2,8 @@ package com.github.imliar.getstream.client
 
 import java.net.URL
 import java.nio.charset.Charset
-
-import com.twitter.finagle.Service
+import com.github.imliar.getstream.client.models.GetStreamActivity
+import com.twitter.finagle.{client, Service}
 import com.twitter.finagle.http.RequestBuilder
 import com.twitter.util.{JavaTimer, Duration, Future}
 import org.jboss.netty.handler.codec.http._
@@ -14,17 +14,140 @@ import org.json4s.{DefaultReaders, Reader, MappingException, jvalue2monadic}
 
 import scala.util.{Failure, Success, Try}
 
+/**
+ * GetStream feed to work with
+ */
+trait GetStreamFeed {
 
-case class GetStreamFeed(client: GetStreamClient,
-                         feedSlug: String,
+  val feedSlug: String
+  val feedId: String
+
+  /**
+   * Basic api data (key, version, etc)
+   */
+  val apiData: ApiDataProvider
+
+  /**
+   * Finagle Http client
+   */
+  val httpClient: Service[HttpRequest, HttpResponse]
+
+  /**
+   * Max http timeout
+   */
+  val httpTimeout: Duration
+
+  /**
+   * Add new activity
+   * @return Future containing `GetStreamActivity` with id, provided by getstream.io
+   */
+  def addActivity(activity: GetStreamActivity): Future[GetStreamActivity]
+
+  /**
+   * Add new activities
+    @return Future containing sequence of activities with ids, provided by getstream.io
+   */
+  def addActivities(activities: Seq[GetStreamActivity]): Future[Seq[GetStreamActivity]]
+
+  /**
+   * Get activities from feed
+   * @param from start request from this activity id (using range-based pagination)
+   * @param limit limit number of requests
+   */
+  def getActivities(from: Option[String] = None, limit: Int = 25): Future[Seq[GetStreamActivity]]
+
+  /**
+   * Follow provided feed
+   */
+  def followFeed(feed: GetStreamFeed): Future[Boolean]
+
+  /**
+   * Unfollow provided
+   */
+  def unfollowFeed(feed: GetStreamFeed): Future[Boolean]
+
+  /**
+   * Get current feed followers
+   */
+  def followers(from: Option[String], limit: Int = 25): Future[Seq[GetStreamFeed]]
+
+  /**
+   * Get list of following feeds
+   */
+  def following(from: Option[String], limit: Int = 25): Future[Seq[GetStreamFeed]]
+
+  /**
+   * Drop current feed
+   */
+  def deleteFeed(): Future[Boolean]
+
+}
+
+
+case class GetStreamFeedImpl(feedSlug: String,
+                             feedId: String,
+                             apiData: ApiDataProvider,
+                             httpClient: Service[HttpRequest, HttpResponse],
+                             httpTimeout: Duration)
+  extends GetStreamFeed {
+  /**
+   * Add new activity
+   * @return Future containing `GetStreamActivity` with id, provided by getstream.io
+   */
+  override def addActivity(activity: GetStreamActivity): Future[GetStreamActivity] = ???
+
+  /**
+   * Get current feed followers
+   */
+  override def followers(from: Option[String], limit: Int): Future[Seq[GetStreamFeed]] = ???
+
+  /**
+   * Drop current feed
+   */
+  override def deleteFeed(): Future[Boolean] = ???
+
+  /**
+   * Get list of following feeds
+   */
+  override def following(from: Option[String], limit: Int): Future[Seq[GetStreamFeed]] = ???
+
+  /**
+   * Unfollow provided
+   */
+  override def unfollowFeed(feed: GetStreamFeed): Future[Boolean] = ???
+
+  /**
+   * Get activities from feed
+   * @param from start request from this activity id (using range-based pagination)
+   * @param limit limit number of requests
+   */
+  override def getActivities(from: Option[String], limit: Int): Future[Seq[GetStreamActivity]] = ???
+
+  /**
+   * Add new activities
+    @return Future containing sequence of activities with ids, provided by getstream.io
+   */
+  override def addActivities(activities: Seq[GetStreamActivity]): Future[Seq[GetStreamActivity]] = ???
+
+  /**
+   * Follow provided feed
+   */
+  override def followFeed(feed: GetStreamFeed): Future[Boolean] = ???
+}
+
+//case class Get
+
+/*
+case class GetStreamFeed(feedSlug: String,
                          feedId: String,
                          apiKey: String,
+                         apiVersion: String,
                          token: String)
-                        (httpClient: Service[HttpRequest, HttpResponse], timeout: Duration) {
+                        (httpClient: Service[HttpRequest, HttpResponse], timeout: Duration) { self: GetStreamFeedFactoryComponent =>
 
   require(feedSlug.matches("^\\w+$"), "feedSlug can only contain alphanumeric characters or underscores")
 
-  implicit val formats = JsonObjectUtils.formats
+  //implicit val formats = JsonObjectUtils.formats
   import GetStreamFeed._
 
   private val baseFeedUrl = s"feed/$feedSlug/$feedId"
@@ -33,7 +156,7 @@ case class GetStreamFeed(client: GetStreamClient,
     val queryParams = (requestParams.map {
       case (param, value) => s"$param=${value.toString}"
     }.toSeq :+ s"api_key=$apiKey").mkString("&")
-    val urlString = s"${GetStreamFeed.API_ENDPOINT}/${client.apiVersion}/$url"
+    val urlString = s"${GetStreamFeed.API_ENDPOINT}/${apiVersion}/$url"
 
     if (queryParams.nonEmpty) {
       new URL(urlString + "?" + queryParams)
@@ -46,7 +169,7 @@ case class GetStreamFeed(client: GetStreamClient,
     to.map { t =>
       val feedAndId = t.split(":")
       val (feedSlug, feedId) = (feedAndId(0), feedAndId(1))
-      val recipientFeed = client.feed(feedSlug, feedId)
+      val recipientFeed = feedFactory.feed(feedSlug, feedId)
       val recipientToken = recipientFeed.token
       s"""$feedSlug:$feedId $recipientToken"""
     }.toSeq
@@ -215,3 +338,4 @@ object GetStreamFeed {
   }
   implicit val timelineFeedSeqReader: Reader[Seq[TimelineFeed]] = DefaultReaders.traversableReader[Seq, TimelineFeed]
 }
+*/

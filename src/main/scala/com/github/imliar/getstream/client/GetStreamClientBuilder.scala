@@ -1,13 +1,13 @@
 package com.github.imliar.getstream.client
 
+import com.twitter.conversions.time._
 import com.twitter.finagle.Service
 import com.twitter.finagle.builder.ClientBuilder
 import com.twitter.finagle.http.Http
 import com.twitter.finagle.service.RetryPolicy
-import com.typesafe.config.{ConfigFactory, Config}
-import org.jboss.netty.handler.codec.http.{HttpResponse, HttpRequest}
 import com.twitter.util.Duration
-import com.twitter.conversions.time._
+import com.typesafe.config.{Config, ConfigFactory}
+import org.jboss.netty.handler.codec.http.{HttpRequest, HttpResponse}
 
 /**
  * Immutable builder for GetStreamClient
