@@ -11,34 +11,9 @@ import org.jboss.netty.handler.codec.http.{HttpResponse, HttpRequest}
  */
 trait GetStreamClient {
   /**
-   * API key for getstream app
-   */
-  val apiKey: String
-
-  /**
-   * API secret for getstream app
-   */
-  val apiSecret: String
-
-  /**
-   * API version
-   */
-  val apiVersion: String
-
-  /**
-   * Finagle Http Client
-   */
-  val httpClient: Service[HttpRequest, HttpResponse]
-
-  /**
-   * Maximum timeout duration
-   */
-  val httpTimeout: Duration
-
-  /**
    * Get feed with specified slug/id. Token will be created if not provided.
    */
-  def feed(feedSlug: String, id: String, tokenOpt: Option[String] = None): GetStreamFeed
+  def feed(feedSlug: String, id: String): GetStreamFeed
 }
 
 /**
@@ -49,8 +24,8 @@ trait GetStreamClientImpl extends GetStreamClient { self: GetStreamFeedFactoryCo
   /**
    * Get feed with specified slug/id. Token will be created if not provided.
    */
-  override def feed(feedSlug: String, feedId: String, tokenOpt: Option[String]): GetStreamFeed = {
-      feedFactory.feed(apiKey, apiVersion, feedSlug, feedId, tokenOpt)(httpClient, httpTimeout)
+  override def feed(feedSlug: String, feedId: String): GetStreamFeed = {
+      feedFactory.feed(feedSlug, feedId)
   }
 
 }

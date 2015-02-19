@@ -20,10 +20,9 @@ trait GetStreamFeedFactoryComponent {
   trait GetStreamFeedFactory {
 
     /**
-     * Get feed. Token will be created if not provided.
+     * Get feed
      */
-    def feed(apiKey: String, apiVersion: String, feedSlug: String, feedId: String, tokenOpt: Option[String] = None)
-            (httpClient: Service[HttpRequest, HttpResponse], httpTimeout: Duration): GetStreamFeed
+    def feed(feedSlug: String, feedId: String): GetStreamFeed
   }
 }
 
@@ -35,9 +34,15 @@ trait GetStreamFeedFactoryDefaultComponent extends GetStreamFeedFactoryComponent
   /**
    * Signer for tokens
    */
-  val signer: GetStreamSign
+  //val signer: GetStreamSign
 
+  //values for http mixin
   val serializer: GetStreamSerializer
+  val host: String
+  val location: String
+  val httpClient: Service[HttpRequest, HttpResponse]
+  val httpTimeout: Duration
+  val apiData: ApiDataProvider
 
   /**
    * Get instance of feed factory
@@ -49,24 +54,28 @@ trait GetStreamFeedFactoryDefaultComponent extends GetStreamFeedFactoryComponent
     /**
      * Get feed with automatically generated token
      */
-    override def feed(apiKey: String, apiVersion: String, slug: String, id: String, tokenOpt: Option[String] = None)
-                     (client: Service[HttpRequest, HttpResponse], timeout: Duration): GetStreamFeed = {
+    override def feed(slug: String, id: String): GetStreamFeed = {
 
-      val token = tokenOpt getOrElse signer.signature(slug + id)
-      val data = ApiDataProvider(apiVersion, apiKey, token)
-      val sig = signer
+      //val token = tokenOpt getOrElse signer.signature(slug + id)
+
+      val data = apiData
       val ser = serializer
+      val client = httpClient
+      val timeout = timeout
+      val h = host
+      val l = location
 
-      new GetStreamFeedImpl with GetStreamFeedFactoryDefaultComponent with GetStreamHttpClientDefaultComponent {
-        val feedSlug = slug
-        val feedId = id
-        val apiData = data
+      new GetStreamFeedImpl with GetStreamHttpClientDefaultComponent {
+        override val feedSlug = slug
+        override val feedId = id
 
-        val httpClient = client
-        val httpTimeout = timeout
-
-        val signer = sig
-        val serializer: GetStreamSerializer = ser
+        //values for http component
+        override val httpClient = client
+        override val httpTimeout = timeout
+        override val serializer = ser
+        override val host = h
+        override val location = l
+        override val apiData = data
       }
     }
 

@@ -1,5 +1,10 @@
 package com.github.imliar.getstream.client
 
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.ext._
+import org.json4s.jackson.Serialization.write
+
 trait GetStreamSerializer {
 
   def serialize[A <: AnyRef](a: A)(implicit m: Manifest[A]): String
@@ -9,11 +14,6 @@ trait GetStreamSerializer {
 }
 
 object GetStreamDefaultSerializer extends GetStreamSerializer {
-
-    import org.json4s._
-    import org.json4s.jackson.JsonMethods._
-    import org.json4s.ext._
-    import org.json4s.jackson.Serialization.write
 
     implicit val formats = DefaultFormats ++ JodaTimeSerializers.all
 

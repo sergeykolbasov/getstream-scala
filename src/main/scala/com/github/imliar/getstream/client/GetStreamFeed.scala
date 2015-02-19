@@ -23,11 +23,6 @@ trait GetStreamFeed {
   val feedId: String
 
   /**
-   * Basic api data (key, version, etc)
-   */
-  val apiData: ApiDataProvider
-
-  /**
    * Add new activity
    * @return Future containing `GetStreamActivity` with id, provided by getstream.io
    */
@@ -74,11 +69,10 @@ trait GetStreamFeed {
 }
 
 
-trait GetStreamFeedImpl extends GetStreamFeed { self: GetStreamFeedFactoryComponent with GetStreamHttpClientComponent =>
+trait GetStreamFeedImpl extends GetStreamFeed { self: GetStreamHttpClientComponent =>
 
   val feedSlug: String
   val feedId: String
-  val apiData: ApiDataProvider
 
   /**
    * Add new activity
