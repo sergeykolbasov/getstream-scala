@@ -16,8 +16,9 @@ import org.jboss.netty.handler.codec.http.{HttpRequest, HttpResponse}
  * @param httpTimeout Default HTTP timeout
  */
 class GetStreamClientBuilder(config: Config,
-                                  httpClient: Option[Service[HttpRequest, HttpResponse]] = None,
-                                  httpTimeout: Duration = 30.seconds) {
+                             httpClient: Option[Service[HttpRequest, HttpResponse]] = None,
+                             httpTimeout: Duration = 30.seconds,
+                             serializer: GetStreamSerializer = GetStreamDefaultSerializer) {
   /**
    * Pass another config
    */
@@ -28,21 +29,26 @@ class GetStreamClientBuilder(config: Config,
   /**
    * Pass custom HTTP client instead of default one
    */
-  def withHttpClient(httpClient: Service[HttpRequest, HttpResponse]) = {
+  def withHttpClient(httpClient: Service[HttpRequest, HttpResponse]): GetStreamClientBuilder = {
     copy(httpClient = Some(httpClient))
   }
 
   /**
    * Use custom HTTP timeout instead of default one
    */
-  def withHttpTimeout(httpTimeout: Duration) = {
+  def withHttpTimeout(httpTimeout: Duration): GetStreamClientBuilder = {
     copy(httpTimeout = httpTimeout)
+  }
+
+  def withSerializer(serializer: GetStreamSerializer): GetStreamClientBuilder = {
+    copy(serializer = serializer)
   }
 
   def copy(config: Config = this.config,
            httpClient: Option[Service[HttpRequest, HttpResponse]] = this.httpClient,
-           httpTimeout: Duration = this.httpTimeout) = {
-    new GetStreamClientBuilder(config, httpClient, httpTimeout)
+           httpTimeout: Duration = this.httpTimeout,
+           serializer: GetStreamSerializer = this.serializer) = {
+    new GetStreamClientBuilder(config, httpClient, httpTimeout, serializer)
   }
 
   /**
@@ -54,14 +60,9 @@ class GetStreamClientBuilder(config: Config,
     val secret = config.getString("getstream.api.secret")
     val version = config.getString("getstream.api.version")
 
-    val client = this.httpClient.getOrElse(GetStreamClientBuilder.defaultHttpClient(config))
+    val client = httpClient.getOrElse(GetStreamClientBuilder.defaultHttpClient(config))
 
-    /*
-    new GetStreamClientImpl(
-      apiKey = apiKey,
-      apiSecret = apiSecret,
-      apiVersion = apiVersion
-    )(httpClient = httpClient, httpTimeout = httpTimeout)*/
+    val ser = serializer
 
     new GetStreamClientImpl with GetStreamFeedFactoryDefaultComponent {
       override val apiKey: String = key
@@ -72,6 +73,7 @@ class GetStreamClientBuilder(config: Config,
       override val httpTimeout: Duration = 30.seconds
 
       override val signer: GetStreamSign = new GetStreamSign(apiSecret)
+      override val serializer: GetStreamSerializer = ser
     }
   }
 

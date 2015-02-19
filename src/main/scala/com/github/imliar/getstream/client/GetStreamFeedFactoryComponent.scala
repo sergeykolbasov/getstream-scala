@@ -1,5 +1,6 @@
 package com.github.imliar.getstream.client
 
+import com.github.imliar.getstream.client.models.ApiDataProvider
 import com.twitter.finagle.Service
 import com.twitter.util.Duration
 import org.jboss.netty.handler.codec.http.{HttpRequest, HttpResponse}
@@ -36,6 +37,8 @@ trait GetStreamFeedFactoryDefaultComponent extends GetStreamFeedFactoryComponent
    */
   val signer: GetStreamSign
 
+  val serializer: GetStreamSerializer
+
   /**
    * Get instance of feed factory
    */
@@ -51,16 +54,19 @@ trait GetStreamFeedFactoryDefaultComponent extends GetStreamFeedFactoryComponent
 
       val token = tokenOpt getOrElse signer.signature(slug + id)
       val data = ApiDataProvider(apiVersion, apiKey, token)
-      val s = signer
+      val sig = signer
+      val ser = serializer
 
-      new GetStreamFeedImpl with GetStreamFeedFactoryDefaultComponent {
+      new GetStreamFeedImpl with GetStreamFeedFactoryDefaultComponent with GetStreamHttpClientDefaultComponent {
         val feedSlug = slug
         val feedId = id
         val apiData = data
+
         val httpClient = client
         val httpTimeout = timeout
 
-        val signer = s
+        val signer = sig
+        val serializer: GetStreamSerializer = ser
       }
     }
 

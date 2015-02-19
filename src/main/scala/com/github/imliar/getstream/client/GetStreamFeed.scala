@@ -2,7 +2,7 @@ package com.github.imliar.getstream.client
 
 import java.net.URL
 import java.nio.charset.Charset
-import com.github.imliar.getstream.client.models.GetStreamActivity
+import com.github.imliar.getstream.client.models.{ApiDataProvider, GetStreamActivity}
 import com.twitter.finagle.{client, Service}
 import com.twitter.finagle.http.RequestBuilder
 import com.twitter.util.{JavaTimer, Duration, Future}
@@ -26,16 +26,6 @@ trait GetStreamFeed {
    * Basic api data (key, version, etc)
    */
   val apiData: ApiDataProvider
-
-  /**
-   * Finagle Http client
-   */
-  val httpClient: Service[HttpRequest, HttpResponse]
-
-  /**
-   * Max http timeout
-   */
-  val httpTimeout: Duration
 
   /**
    * Add new activity
@@ -84,13 +74,11 @@ trait GetStreamFeed {
 }
 
 
-trait GetStreamFeedImpl extends GetStreamFeed { self: GetStreamFeedFactoryComponent =>
+trait GetStreamFeedImpl extends GetStreamFeed { self: GetStreamFeedFactoryComponent with GetStreamHttpClientComponent =>
 
   val feedSlug: String
   val feedId: String
   val apiData: ApiDataProvider
-  val httpClient: Service[HttpRequest, HttpResponse]
-  val httpTimeout: Duration
 
   /**
    * Add new activity
