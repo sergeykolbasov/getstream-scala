@@ -50,17 +50,29 @@ class GetStreamClientBuilder(config: Config,
    */
   def build(): GetStreamClient = {
 
-    val apiKey = config.getString("getstream.api.key")
-    val apiSecret = config.getString("getstream.api.secret")
-    val apiVersion = config.getString("getstream.api.version")
+    val key = config.getString("getstream.api.key")
+    val secret = config.getString("getstream.api.secret")
+    val version = config.getString("getstream.api.version")
 
-    val httpClient = this.httpClient.getOrElse(GetStreamClientBuilder.defaultHttpClient(config))
+    val client = this.httpClient.getOrElse(GetStreamClientBuilder.defaultHttpClient(config))
 
+    /*
     new GetStreamClientImpl(
       apiKey = apiKey,
       apiSecret = apiSecret,
       apiVersion = apiVersion
-    )(httpClient = httpClient, httpTimeout = httpTimeout)
+    )(httpClient = httpClient, httpTimeout = httpTimeout)*/
+
+    new GetStreamClientImpl with GetStreamFeedFactoryDefaultComponent {
+      override val apiKey: String = key
+      override val apiVersion: String = version
+      override val apiSecret: String = secret
+
+      override val httpClient: Service[HttpRequest, HttpResponse] = client
+      override val httpTimeout: Duration = 30.seconds
+
+      override val signer: GetStreamSign = new GetStreamSign(apiSecret)
+    }
   }
 
 }

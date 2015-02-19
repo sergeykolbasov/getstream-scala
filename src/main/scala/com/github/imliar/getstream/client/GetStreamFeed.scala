@@ -84,12 +84,14 @@ trait GetStreamFeed {
 }
 
 
-case class GetStreamFeedImpl(feedSlug: String,
-                             feedId: String,
-                             apiData: ApiDataProvider,
-                             httpClient: Service[HttpRequest, HttpResponse],
-                             httpTimeout: Duration)
-  extends GetStreamFeed {
+trait GetStreamFeedImpl extends GetStreamFeed { self: GetStreamFeedFactoryComponent =>
+
+  val feedSlug: String
+  val feedId: String
+  val apiData: ApiDataProvider
+  val httpClient: Service[HttpRequest, HttpResponse]
+  val httpTimeout: Duration
+
   /**
    * Add new activity
    * @return Future containing `GetStreamActivity` with id, provided by getstream.io

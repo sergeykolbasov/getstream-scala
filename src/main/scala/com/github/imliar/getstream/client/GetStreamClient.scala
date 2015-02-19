@@ -9,7 +9,7 @@ import org.jboss.netty.handler.codec.http.{HttpResponse, HttpRequest}
  * Basic trait for GetStream client.
  * Single instance of GetStreamClient could be used just like a HTTP client
  */
-trait GetStreamClient { self: GetStreamFeedFactoryComponent =>
+trait GetStreamClient {
   /**
    * API key for getstream app
    */
@@ -26,6 +26,16 @@ trait GetStreamClient { self: GetStreamFeedFactoryComponent =>
   val apiVersion: String
 
   /**
+   * Finagle Http Client
+   */
+  val httpClient: Service[HttpRequest, HttpResponse]
+
+  /**
+   * Maximum timeout duration
+   */
+  val httpTimeout: Duration
+
+  /**
    * Get feed with specified slug/id. Token will be created if not provided.
    */
   def feed(feedSlug: String, id: String, tokenOpt: Option[String] = None): GetStreamFeed
@@ -34,26 +44,13 @@ trait GetStreamClient { self: GetStreamFeedFactoryComponent =>
 /**
  * Basic implementation
  */
-case class GetStreamClientImpl(
-                            apiKey: String,
-                            apiSecret: String,
-                            apiVersion: String
-                            )(httpClient: Service[HttpRequest, HttpResponse], httpTimeout: Duration)
-  extends GetStreamClient with GetStreamFeedFactoryDefaultComponent {
-
+trait GetStreamClientImpl extends GetStreamClient { self: GetStreamFeedFactoryComponent =>
 
   /**
    * Get feed with specified slug/id. Token will be created if not provided.
    */
   override def feed(feedSlug: String, feedId: String, tokenOpt: Option[String]): GetStreamFeed = {
-    tokenOpt match {
-      case Some(token) => feedFactory.feed(apiKey, apiVersion, feedSlug, feedId, token)(httpClient, httpTimeout)
-      case _ => feedFactory.feed(apiKey, apiVersion, feedSlug, feedId)(httpClient, httpTimeout)
-    }
+      feedFactory.feed(apiKey, apiVersion, feedSlug, feedId, tokenOpt)(httpClient, httpTimeout)
   }
 
-  /**
-   * Signer for tokens
-   */
-  override val signer: GetStreamSign = new GetStreamSign(apiSecret)
 }

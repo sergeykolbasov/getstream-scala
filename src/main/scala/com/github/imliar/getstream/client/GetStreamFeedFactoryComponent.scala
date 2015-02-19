@@ -5,7 +5,9 @@ import com.twitter.util.Duration
 import org.jboss.netty.handler.codec.http.{HttpRequest, HttpResponse}
 
 /**
- * Trait for feed factory. Implement cake-pattern to avoid usage of 3rd-party DI libraries
+ * Trait for feed factory.
+ * Use kind of cake-pattern to avoid usage of 3rd-party DI libraries
+ * and allow to easily override factory/feed to implement own behaviour
  */
 trait GetStreamFeedFactoryComponent {
 
@@ -17,15 +19,9 @@ trait GetStreamFeedFactoryComponent {
   trait GetStreamFeedFactory {
 
     /**
-     * Get feed with automatically generated token
+     * Get feed. Token will be created if not provided.
      */
-    def feed(apiKey: String, apiVersion: String, feedSlug: String, feedId: String)
-            (httpClient: Service[HttpRequest, HttpResponse], httpTimeout: Duration): GetStreamFeed
-
-    /**
-     * Get feed with provided token
-     */
-    def feed(apiKey: String, apiVersion: String, feedSlug: String, feedId: String, token: String)
+    def feed(apiKey: String, apiVersion: String, feedSlug: String, feedId: String, tokenOpt: Option[String] = None)
             (httpClient: Service[HttpRequest, HttpResponse], httpTimeout: Duration): GetStreamFeed
   }
 }
@@ -50,32 +46,23 @@ trait GetStreamFeedFactoryDefaultComponent extends GetStreamFeedFactoryComponent
     /**
      * Get feed with automatically generated token
      */
-    override def feed(apiKey: String, apiVersion: String, feedSlug: String, feedId: String)
-                     (httpClient: Service[HttpRequest, HttpResponse], httpTimeout: Duration): GetStreamFeed = {
+    override def feed(apiKey: String, apiVersion: String, slug: String, id: String, tokenOpt: Option[String] = None)
+                     (client: Service[HttpRequest, HttpResponse], timeout: Duration): GetStreamFeed = {
 
-      val token = signer.signature(feedSlug + feedId)
-      val apiData = ApiDataProvider(apiVersion, apiKey, token)
+      val token = tokenOpt getOrElse signer.signature(slug + id)
+      val data = ApiDataProvider(apiVersion, apiKey, token)
       val s = signer
 
-      new GetStreamFeedImpl(feedSlug, feedId, apiData, httpClient, httpTimeout)
-        with GetStreamFeedFactoryDefaultComponent {
-          val signer: GetStreamSign = s
-        }
+      new GetStreamFeedImpl with GetStreamFeedFactoryDefaultComponent {
+        val feedSlug = slug
+        val feedId = id
+        val apiData = data
+        val httpClient = client
+        val httpTimeout = timeout
+
+        val signer = s
+      }
     }
 
-    /**
-     * Get feed with provided token
-     */
-    override def feed(apiKey: String, apiVersion: String, feedSlug: String, feedId: String, token: String)
-                     (httpClient: Service[HttpRequest, HttpResponse], httpTimeout: Duration): GetStreamFeed = {
-
-      val apiData = ApiDataProvider(apiVersion, apiKey, token)
-      val s = signer
-
-      new GetStreamFeedImpl(feedSlug, feedId, apiData, httpClient, httpTimeout)
-        with GetStreamFeedFactoryDefaultComponent {
-          val signer = s
-        }
-    }
   }
 }
