@@ -8,5 +8,6 @@ libraryDependencies ++= Seq(
 	"com.twitter" %% "finagle-http" % "6.24.0",
 	"com.typesafe" % "config" % "1.2.1",
 	"joda-time" % "joda-time" % "2.7",
-	"org.apache.httpcomponents" % "httpcore" % "4.4"
+	"org.apache.httpcomponents" % "httpcore" % "4.4",
+	"org.apache.httpcomponents" % "httpclient" % "4.4"
 )

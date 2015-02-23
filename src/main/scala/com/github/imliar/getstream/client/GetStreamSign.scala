@@ -3,6 +3,7 @@ package com.github.imliar.getstream.client
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
+import com.github.imliar.getstream.client.models.Feed
 import org.apache.commons.codec.binary.Base64
 
 /**
@@ -32,8 +33,8 @@ case class GetStreamSign(key: String) {
   /**
    * Returns URL-safe base64 representation of HMAC sign built on top of API secret key
    */
-  def signature(value: String): String = {
-    val digest = hmac(value, hashedKey)
+  def signature(feed: Feed): String = {
+    val digest = hmac(feed.feedSlug + feed.feedSlug, hashedKey)
     safeB64encode(digest).trim
   }
 

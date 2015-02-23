@@ -1,5 +1,6 @@
 package com.github.imliar.getstream.client
 
+import com.github.imliar.getstream.client.models.Feed
 import com.twitter.finagle.Service
 import com.twitter.util.Duration
 import com.twitter.conversions.time._
@@ -13,7 +14,7 @@ trait GetStreamClient {
   /**
    * Get feed with specified slug/id. Token will be created if not provided.
    */
-  def feed(feedSlug: String, id: String): GetStreamFeed
+  def feed(feed: Feed): GetStreamFeed
 }
 
 /**
@@ -24,8 +25,8 @@ trait GetStreamClientImpl extends GetStreamClient { self: GetStreamFeedFactoryCo
   /**
    * Get feed with specified slug/id. Token will be created if not provided.
    */
-  override def feed(feedSlug: String, feedId: String): GetStreamFeed = {
-      feedFactory.feed(feedSlug, feedId)
+  override def feed(feed: Feed): GetStreamFeed = {
+      feedFactory.feed(feed)
   }
 
 }

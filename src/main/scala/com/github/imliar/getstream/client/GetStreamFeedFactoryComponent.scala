@@ -1,8 +1,9 @@
 package com.github.imliar.getstream.client
 
-import com.github.imliar.getstream.client.models.ApiDataProvider
+import com.github.imliar.getstream.client.models.{Feed, Tokenized}
 import com.twitter.finagle.Service
 import com.twitter.util.Duration
+import com.typesafe.config.Config
 import org.jboss.netty.handler.codec.http.{HttpRequest, HttpResponse}
 
 /**
@@ -15,14 +16,14 @@ trait GetStreamFeedFactoryComponent {
   /**
    * Get instance of feed factory
    */
-  def feedFactory: GetStreamFeedFactory
+  protected def feedFactory: GetStreamFeedFactory
 
   trait GetStreamFeedFactory {
 
     /**
      * Get feed
      */
-    def feed(feedSlug: String, feedId: String): GetStreamFeed
+    def feed(feed: Feed): GetStreamFeed with Tokenized
   }
 }
 
@@ -34,48 +35,45 @@ trait GetStreamFeedFactoryDefaultComponent extends GetStreamFeedFactoryComponent
   /**
    * Signer for tokens
    */
-  //val signer: GetStreamSign
+  val signer: GetStreamSign
 
   //values for http mixin
-  val serializer: GetStreamSerializer
-  val host: String
-  val location: String
-  val httpClient: Service[HttpRequest, HttpResponse]
-  val httpTimeout: Duration
-  val apiData: ApiDataProvider
+  protected val serializer: GetStreamSerializer
+  protected val httpClient: Service[HttpRequest, HttpResponse]
+  protected val httpTimeout: Duration
+  protected val config: Config
 
   /**
    * Get instance of feed factory
    */
-  def feedFactory: GetStreamFeedFactory = new GetStreamFeedFactoryDefault
+  protected def feedFactory: GetStreamFeedFactory = new GetStreamFeedFactoryDefault
 
   class GetStreamFeedFactoryDefault extends GetStreamFeedFactory {
 
     /**
      * Get feed with automatically generated token
      */
-    override def feed(slug: String, id: String): GetStreamFeed = {
+    override def feed(feed: Feed): GetStreamFeed with Tokenized= {
 
       //val token = tokenOpt getOrElse signer.signature(slug + id)
 
-      val data = apiData
       val ser = serializer
       val client = httpClient
-      val timeout = timeout
-      val h = host
-      val l = location
+      val timeout = httpTimeout
+      val cfg = config
 
-      new GetStreamFeedImpl with GetStreamHttpClientDefaultComponent {
-        override val feedSlug = slug
-        override val feedId = id
+      new GetStreamFeedImpl with GetStreamHttpClientDefaultComponent with Tokenized {
+        override val feedSlug = feed.feedSlug
+        override val feedId = feed.feedId
 
         //values for http component
         override val httpClient = client
         override val httpTimeout = timeout
         override val serializer = ser
-        override val host = h
-        override val location = l
-        override val apiData = data
+        override val config: Config = cfg
+
+        //token
+        override val token: String = signer.signature(feed)
       }
     }
 

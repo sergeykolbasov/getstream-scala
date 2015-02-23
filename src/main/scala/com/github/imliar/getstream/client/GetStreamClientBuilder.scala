@@ -1,6 +1,5 @@
 package com.github.imliar.getstream.client
 
-import com.github.imliar.getstream.client.models.ApiDataProvider
 import com.twitter.conversions.time._
 import com.twitter.finagle.Service
 import com.twitter.finagle.builder.ClientBuilder
@@ -61,28 +60,21 @@ class GetStreamClientBuilder(config: Config,
     val secret = config.getString("getstream.api.secret")
     val version = config.getString("getstream.api.version")
 
-    val httpBuilder = GetStreamClientBuilder.defaultHttpClient(config)
-
-    val client = httpClient.getOrElse(httpBuilder.build())
+    val client = httpClient.getOrElse(GetStreamClientBuilder.defaultHttpClient(config))
 
     val ser = serializer
 
     new GetStreamClientImpl with GetStreamFeedFactoryDefaultComponent {
 
-      override val apiData: ApiDataProvider = ApiDataProvider(
-        apiVersion = version,
-        apiKey = key,
-        token = None,
-        secret = secret
-      )
-
-      override val host: String = httpBuilder.host
-      override val location: String = httpBuilder.location
       override val httpClient: Service[HttpRequest, HttpResponse] = client
       override val httpTimeout: Duration = 30.seconds
 
       //override val signer: GetStreamSign = new GetStreamSign(apiSecret)
       override val serializer: GetStreamSerializer = ser
+
+      override val config: Config = config withFallback GetStreamClientBuilder.defaultConfig
+
+      override val signer: GetStreamSign = new GetStreamSign(secret)
     }
   }
 
@@ -101,7 +93,7 @@ private object GetStreamClientBuilder {
     ))
   }
 
-  def defaultHttpClient(config: Config): HttpClientBuilder = {
+  def defaultHttpClient(config: Config): Service[HttpRequest, HttpResponse] = {
     val withFallback = config.withFallback(defaultConfig)
 
     val host = withFallback.getString("getstream.http.host")
@@ -110,14 +102,6 @@ private object GetStreamClientBuilder {
     val retries = withFallback.getInt("getstream.http.retries")
     val connectionLimit = withFallback.getInt("getstream.http.connectionLimit")
 
-    HttpClientBuilder(host, location, retries, connectionLimit)
-  }
-
-}
-
-private case class HttpClientBuilder(host: String, location: String, retries: Int, connectionLimit: Int) {
-
-  def build(): Service[HttpRequest, HttpResponse] = {
     ClientBuilder()
       .codec(Http())
       .tls(host)
@@ -126,5 +110,4 @@ private case class HttpClientBuilder(host: String, location: String, retries: In
       .retryPolicy(RetryPolicy.tries(retries, RetryPolicy.ChannelClosedExceptionsOnly))
       .build()
   }
-
 }
