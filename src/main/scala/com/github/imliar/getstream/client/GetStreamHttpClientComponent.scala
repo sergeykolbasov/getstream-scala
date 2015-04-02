@@ -3,7 +3,8 @@ package com.github.imliar.getstream.client
 import java.net.{URI, URL}
 import com.github.imliar.getstream.client.models.Tokenized
 import com.twitter.finagle.Service
-import com.twitter.finagle.http.RequestBuilder
+import com.twitter.finagle.httpx.{Response, Request, Method, RequestBuilder}
+import com.twitter.io.Buf.ByteArray
 import com.twitter.io.Charsets
 import com.twitter.util.{JavaTimer, Duration}
 import com.typesafe.config.Config
@@ -27,7 +28,7 @@ trait GetStreamHttpClientComponent {
      * Do request to getstream.io and await response of type T within given timeout
      */
     def makeHttpRequest[T <: AnyRef, A <: AnyRef](uri: URI,
-                                        method: HttpMethod,
+                                        method: Method,
                                         data: A,
                                         params: Seq[BasicNameValuePair] = Seq.empty)
                                                   (implicit m1: Manifest[A], m2: Manifest[T]): Future[T]
@@ -45,7 +46,7 @@ trait GetStreamHttpClientDefaultComponent extends GetStreamHttpClientComponent {
   /**
    * Finagle Http client
    */
-  protected val httpClient: Service[HttpRequest, HttpResponse]
+  protected val httpClient: Service[Request, Response]
 
   /**
    * Max timeout for Http client
@@ -62,19 +63,19 @@ trait GetStreamHttpClientDefaultComponent extends GetStreamHttpClientComponent {
    */
   protected val http = new GetStreamHttpDefaultClient(httpClient, httpTimeout)
 
-  class GetStreamHttpDefaultClient(httpClient: Service[HttpRequest, HttpResponse],
+  class GetStreamHttpDefaultClient(httpClient: Service[Request, Response],
                                    httpTimeout: Duration) extends GetStreamHttpClient {
 
     /**
      * Do request to getstream.io and await response of type T within given timeout
      */
     override def makeHttpRequest[T <: AnyRef, A <: AnyRef](uri: URI,
-                                     method: HttpMethod,
+                                     method: Method,
                                      data: A,
                                      params: Seq[BasicNameValuePair] = Seq.empty)
                                                 (implicit m1: Manifest[A], m2: Manifest[T]): Future[T] = {
       val requestBuilder = RequestBuilder()
-      val payload = Some(serializer serialize data).map(d => wrappedBuffer(d.getBytes))
+      val payload = Some(serializer serialize data).map(d => ByteArray.Owned(d.getBytes))
       val url = buildRequestUrl(uri, params)
 
       val request = requestBuilder
@@ -86,7 +87,7 @@ trait GetStreamHttpClientDefaultComponent extends GetStreamHttpClientComponent {
         .build(method, payload)
 
       httpClient(request).within(new JavaTimer, httpTimeout).map{ response =>
-        serializer.deserialize[T](response.getContent toString Charsets.Utf8)
+        serializer.deserialize[T](response.contentString)
       }.asScala
     }
 

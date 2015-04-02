@@ -1,122 +1,67 @@
-package com.github.imliar.getstream.client
+package com.github.imliar.getstream.client.monad
 
-import java.net.URL
-import java.nio.charset.Charset
-import com.github.imliar.getstream.client.models.{Feed, Activity}
-import com.twitter.finagle.{client, Service}
-import com.twitter.util.{JavaTimer, Duration, Future}
-import org.jboss.netty.handler.codec.http._
-import org.jboss.netty.buffer.ChannelBuffers._
-import org.json4s
-import org.json4s.JsonAST._
-import org.json4s.{DefaultReaders, Reader, MappingException, jvalue2monadic}
+import com.github.imliar.getstream.client.models.{Activity, Feed}
+import scala.concurrent.Future
 
-import scala.util.{Failure, Success, Try}
 
 /**
- * GetStream feed to work with
+ * Operations to work with provided feed
  */
-trait GetStreamFeed {
+trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
 
-  val feedSlug: String
-  val feedId: String
+  /**
+   * Feed to operate
+   */
+  val feed: Feed
 
   /**
    * Add new activity
    * @return Future containing `Activity` with id, provided by getstream.io
    */
-  def addActivity[T](activity: Activity[T])(implicit m: Manifest[T]): Future[Activity[T]]
+  def addActivity[T](activity: Activity[T])(implicit m: Manifest[T], bindings: Bindings): Future[Activity[T]] = ???
 
   /**
    * Add new activities
     @return Future containing sequence of activities with ids, provided by getstream.io
    */
-  def addActivities[T](activities: Seq[Activity[T]])(implicit m: Manifest[T]): Future[Seq[Activity[T]]]
+  def addActivities[T](activities: Seq[Activity[T]])(implicit m: Manifest[T], bindings: Bindings): Future[Seq[Activity[T]]] = ???
 
   /**
    * Get activities from feed
    * @param from start request from this activity id (using range-based pagination)
    * @param limit limit number of requests
    */
-  def getActivities[T](from: Option[String] = None, limit: Int = 25)(implicit m: Manifest[T]): Future[Seq[Activity[T]]]
+  def getActivities[T](from: Option[String] = None, limit: Int = 25)(implicit m: Manifest[T], bindings: Bindings): Future[Seq[Activity[T]]] = ???
 
   /**
    * Follow provided feed
    */
-  def followFeed(feed: Feed): Future[Boolean]
+  def followFeed(feedToFollow: Feed)(implicit bindings: Bindings): Future[Boolean] = ???
 
   /**
    * Unfollow provided feed
    */
-  def unfollowFeed(feed: Feed): Future[Boolean]
+  def unfollowFeed(feedToUnfollow: Feed)(implicit bindings: Bindings): Future[Boolean] = ???
 
   /**
    * Get current feed followers
    */
-  def followers(from: Option[String], limit: Int = 25): Future[Seq[Feed]]
+  def followers(from: Option[String], limit: Int = 25)(implicit bindings: Bindings): Future[Seq[Feed]] = ???
 
   /**
    * Get list of following feeds
    */
-  def following(from: Option[String], limit: Int = 25): Future[Seq[Feed]]
+  def following(from: Option[String], limit: Int = 25)(implicit bindings: Bindings): Future[Seq[Feed]] = ???
 
   /**
    * Drop current feed
    */
-  def deleteFeed(): Future[Boolean]
+  def deleteFeed()(implicit bindings: Bindings): Future[Boolean] = ???
 
 }
 
 
-trait GetStreamFeedImpl extends GetStreamFeed { self: GetStreamHttpClientComponent =>
 
-  val feedSlug: String
-  val feedId: String
-
-  /**
-   * Add new activity
-   * @return Future containing `Activity` with id, provided by getstream.io
-   */
-  override def addActivity[T](activity: Activity[T])(implicit m: Manifest[T]): Future[Activity[T]] = ???
-
-  /**
-   * Get current feed followers
-   */
-  override def followers(from: Option[String], limit: Int): Future[Seq[Feed]] = ???
-
-  /**
-   * Drop current feed
-   */
-  override def deleteFeed(): Future[Boolean] = ???
-
-  /**
-   * Unfollow provided
-   */
-  override def unfollowFeed(feed: Feed): Future[Boolean] = ???
-
-  /**
-   * Get list of following feeds
-   */
-  override def following(from: Option[String], limit: Int): Future[Seq[Feed]] = ???
-
-  /**
-   * Get activities from feed
-   * @param from start request from this activity id (using range-based pagination)
-   * @param limit limit number of requests
-   */
-  override def getActivities[T](from: Option[String], limit: Int)(implicit m: Manifest[T]): Future[Seq[Activity[T]]] = ???
-
-  /**
-   * Add new activities
-    @return Future containing sequence of activities with ids, provided by getstream.io
-   */
-  override def addActivities[T](activities: Seq[Activity[T]])(implicit m: Manifest[T]): Future[Seq[Activity[T]]] = ???
-
-  /**
-   * Follow provided feed
-   */
-  override def followFeed(feed: Feed): Future[Boolean] = ???
-}
 
 //case class Get
 

@@ -2,6 +2,7 @@ package com.github.imliar.getstream.client
 
 import com.github.imliar.getstream.client.models.{Feed, Tokenized}
 import com.twitter.finagle.Service
+import com.twitter.finagle.httpx.{Response, Request}
 import com.twitter.util.Duration
 import com.typesafe.config.Config
 import org.jboss.netty.handler.codec.http.{HttpRequest, HttpResponse}
@@ -39,7 +40,7 @@ trait GetStreamFeedFactoryDefaultComponent extends GetStreamFeedFactoryComponent
 
   //values for http mixin
   protected val serializer: GetStreamSerializer
-  protected val httpClient: Service[HttpRequest, HttpResponse]
+  protected val httpClient: Service[Request, Response]
   protected val httpTimeout: Duration
   protected val config: Config
 

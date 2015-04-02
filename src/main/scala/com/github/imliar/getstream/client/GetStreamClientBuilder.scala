@@ -3,11 +3,10 @@ package com.github.imliar.getstream.client
 import com.twitter.conversions.time._
 import com.twitter.finagle.Service
 import com.twitter.finagle.builder.ClientBuilder
-import com.twitter.finagle.http.Http
+import com.twitter.finagle.httpx.{Request, Response, Http}
 import com.twitter.finagle.service.RetryPolicy
 import com.twitter.util.Duration
 import com.typesafe.config.{Config, ConfigFactory}
-import org.jboss.netty.handler.codec.http.{HttpRequest, HttpResponse}
 
 /**
  * Immutable builder for GetStreamClient
@@ -16,7 +15,7 @@ import org.jboss.netty.handler.codec.http.{HttpRequest, HttpResponse}
  * @param httpTimeout Default HTTP timeout
  */
 class GetStreamClientBuilder(config: Config,
-                             httpClient: Option[Service[HttpRequest, HttpResponse]] = None,
+                             httpClient: Option[Service[Request, Response]] = None,
                              httpTimeout: Duration = 30.seconds,
                              serializer: GetStreamSerializer = GetStreamDefaultSerializer) {
   /**
@@ -29,7 +28,7 @@ class GetStreamClientBuilder(config: Config,
   /**
    * Pass custom HTTP client instead of default one
    */
-  def withHttpClient(httpClient: Service[HttpRequest, HttpResponse]): GetStreamClientBuilder = {
+  def withHttpClient(httpClient: Service[Request, Response]): GetStreamClientBuilder = {
     copy(httpClient = Some(httpClient))
   }
 
@@ -45,7 +44,7 @@ class GetStreamClientBuilder(config: Config,
   }
 
   def copy(config: Config = this.config,
-           httpClient: Option[Service[HttpRequest, HttpResponse]] = this.httpClient,
+           httpClient: Option[Service[Request, Response]] = this.httpClient,
            httpTimeout: Duration = this.httpTimeout,
            serializer: GetStreamSerializer = this.serializer) = {
     new GetStreamClientBuilder(config, httpClient, httpTimeout, serializer)
@@ -66,7 +65,7 @@ class GetStreamClientBuilder(config: Config,
 
     new GetStreamClientImpl with GetStreamFeedFactoryDefaultComponent {
 
-      override val httpClient: Service[HttpRequest, HttpResponse] = client
+      override val httpClient: Service[Request, Response] = client
       override val httpTimeout: Duration = 30.seconds
 
       //override val signer: GetStreamSign = new GetStreamSign(apiSecret)
@@ -93,7 +92,7 @@ private object GetStreamClientBuilder {
     ))
   }
 
-  def defaultHttpClient(config: Config): Service[HttpRequest, HttpResponse] = {
+  def defaultHttpClient(config: Config): Service[Request, Response] = {
     val withFallback = config.withFallback(defaultConfig)
 
     val host = withFallback.getString("getstream.http.host")
