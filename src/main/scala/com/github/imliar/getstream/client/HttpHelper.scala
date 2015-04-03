@@ -1,15 +1,20 @@
-package com.github.imliar.getstream.client.monad
+package com.github.imliar.getstream.client
 
 import java.net.{URI, URL}
+
+import com.github.imliar.getstream.client.exceptions.GetStreamParseException
+import com.github.imliar.getstream.client.util.Twitter._
 import com.twitter.finagle.httpx.{Method, RequestBuilder}
 import com.twitter.io.Buf.ByteArray
-import com.twitter.util.{JavaTimer}
-import org.apache.http.client.utils.{URIBuilder}
+import com.twitter.util.JavaTimer
+import org.apache.http.client.utils.URIBuilder
 import org.apache.http.message.BasicNameValuePair
-import scala.concurrent.Future
-import com.github.imliar.getstream.client.util.Twitter._
 
-trait HttpHelper { self: Injectable with GetStreamFeedOps =>
+import scala.concurrent.Future
+import scala.util.{Success, Try}
+
+trait HttpHelper {
+  self: Injectable with GetStreamFeedOps =>
 
   private val serializer = bindings.serializer
   private val httpClient = bindings.httpClient
@@ -20,13 +25,17 @@ trait HttpHelper { self: Injectable with GetStreamFeedOps =>
   /**
    * Do request to getstream.io and await response of type T within given timeout
    */
-  def makeHttpRequest[T <: AnyRef, A <: AnyRef](uri: URI,
+  def makeHttpRequest[A <: AnyRef, T <: AnyRef](uri: URI,
                                                 method: Method,
                                                 data: A,
                                                 params: Seq[BasicNameValuePair] = Seq.empty)
                                                (implicit m1: Manifest[A], m2: Manifest[T]): Future[T] = {
     val requestBuilder = RequestBuilder()
-    val payload = Some(serializer serialize data) map (d => ByteArray.Owned(d.getBytes))
+    val payload = try {
+      Some(serializer serialize data) map (d => ByteArray.Owned(d.getBytes))
+    } catch {
+      case e: Throwable => None
+    }
     val url = buildRequestUrl(uri, params)
 
     val token = signer signature feed
@@ -40,7 +49,11 @@ trait HttpHelper { self: Injectable with GetStreamFeedOps =>
       .build(method, payload)
 
     httpClient(request).within(new JavaTimer, httpTimeout).map { response =>
-      serializer.deserialize[T](response.contentString)
+      val content = response.contentString
+      Try(serializer.deserialize[T](content)) match {
+        case Success(result) => result
+        case _ => throw new GetStreamParseException(uri, method.toString, content)
+      }
     }.asScala
   }
 

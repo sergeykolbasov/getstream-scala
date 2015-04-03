@@ -1,6 +1,5 @@
-package com.github.imliar.getstream.client.monad
+package com.github.imliar.getstream.client
 
-import com.github.imliar.getstream.client.{GetStreamSign, GetStreamSerializer}
 import com.twitter.util.Duration
 import com.typesafe.config.Config
 
