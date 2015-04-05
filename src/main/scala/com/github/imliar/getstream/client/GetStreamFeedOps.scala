@@ -88,17 +88,27 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
   /**
    * Get current feed followers
    */
-  def followers(offset: Option[String], limit: Int = 25): Future[MResponse] = {
+  def followers(offset: Option[String] = None, limit: Int = 25)(implicit ec: ExecutionContext): Future[Seq[Feed]] = {
     val params = limitOffsetParams(offset, limit)
-    makeHttpRequest[No, MResponse](new URI("followers"), Get, None, params)
+    type ResResponse = ResultsResponse[List[Map[String, String]]]
+    makeHttpRequest[No, ResResponse](new URI("followers"), Get, None, params) map { response =>
+      response.results.map { row =>
+        feedDescriptor(row get "feed_id")
+      }.flatten
+    }
   }
 
   /**
    * Get list of following feeds
    */
-  def following(offset: Option[String], limit: Int = 25): Future[MResponse] = {
+  def following(offset: Option[String] = None, limit: Int = 25)(implicit ec: ExecutionContext): Future[Seq[Feed]] = {
     val params = limitOffsetParams(offset, limit)
-    makeHttpRequest[No, MResponse](new URI("followers"), Get, None, params)
+    type ResResponse = ResultsResponse[List[Map[String, String]]]
+    makeHttpRequest[No, ResResponse](new URI("follows"), Get, None, params) map { response =>
+      response.results.map { row =>
+        feedDescriptor(row get "target_id")
+      }.flatten
+    }
   }
 
   /**
@@ -116,6 +126,17 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
     val offsetParam = offset map (o => new BasicNameValuePair("offset", o))
     val params = limitParam :: offsetParam :: Nil
     params.flatten
+  }
+
+  protected def feedDescriptor(toDescript: Option[String]): Option[Feed] = {
+    toDescript.map { string =>
+      val delimeter = ":"
+      val feedDescr = string.split(delimeter)
+      val feedSlug = feedDescr.head
+      val feedId = feedDescr.tail.mkString(delimeter)
+
+      Feed(feedId, feedSlug)
+    }
   }
 
 }
