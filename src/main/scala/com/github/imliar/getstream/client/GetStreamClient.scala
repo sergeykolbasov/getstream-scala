@@ -103,7 +103,7 @@ object DefaultValues {
     ClientBuilder()
       .codec(Http())
       .tls(host)
-      .hosts(s"{$location}.{$host}:443")
+      .hosts(s"$location.$host:443")
       .hostConnectionLimit(connectionLimit)
       .retryPolicy(RetryPolicy.tries(retries, RetryPolicy.ChannelClosedExceptionsOnly))
       .build()

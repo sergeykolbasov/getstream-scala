@@ -2,7 +2,7 @@ package com.github.imliar.getstream.client
 
 import java.net.URI
 
-import com.github.imliar.getstream.client.models.{Activity, Feed}
+import com.github.imliar.getstream.client.models.{ResultsResponse, Activity, Feed}
 import com.twitter.finagle.httpx.Method.{Delete, Get, Post}
 import org.apache.http.message.BasicNameValuePair
 
@@ -50,9 +50,10 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
    * @param from get activities before this id (using range-based pagination)
    * @param limit limit number of requests
    */
-  def getActivities[T](from: Option[String] = None, limit: Int = 25)(implicit m: Manifest[T]): Future[Seq[Activity[T]]] = {
+  def getActivities[T](from: Option[String] = None, limit: Int = 25)(implicit m: Manifest[T], ec: ExecutionContext): Future[Seq[Activity[T]]] = {
     val params = limitOffsetParams(from, limit)
-    makeHttpRequest(new URI(""), Get, None, params)
+    type ResResponse = ResultsResponse[Seq[Activity[T]]]
+    makeHttpRequest[No, ResResponse](new URI(""), Get, None, params).map(_.results)
   }
 
   /**

@@ -10,6 +10,7 @@ import java.util.UUID.randomUUID
 class FeedOpsIntegrationSpecs extends FlatSpec with Matchers with ScalaFutures {
 
   implicit val defaultPatience = PatienceConfig(timeout = Span(5, Seconds), interval = Span(5, Millis))
+  implicit val ec = scala.concurrent.ExecutionContext.global
 
   val client = GetStreamClient(ConfigFactory.load())
 

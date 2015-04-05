@@ -66,14 +66,15 @@ trait HttpHelper {
     val location = config.getString("getstream.http.location")
     val host = config.getString("getstream.http.host")
     val apiKey = config.getString("getstream.api.key")
+    val apiVersion = config.getString("getstream.api.version")
 
-    val path = Some(uri.getPath).filter(_.nonEmpty).map("/" + _ + "/").getOrElse("")
+    val path = Some(uri.getPath).filter(_.nonEmpty).map("/" + _ + "/").getOrElse("/")
 
     val builder = new URIBuilder()
     builder
       .setScheme("https")
       .setHost(s"$location.$host")
-      .setPath(s"/api/feed/${feed.feedSlug}/${feed.feedId}$path")
+      .setPath(s"/api/$apiVersion/feed/${feed.feedSlug}/${feed.feedId}$path")
 
     builder.addParameters(params)
     builder.addParameter("api_key", apiKey)

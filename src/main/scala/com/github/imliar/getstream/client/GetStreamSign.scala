@@ -34,7 +34,7 @@ case class GetStreamSign(key: String) {
    * Returns URL-safe base64 representation of HMAC sign built on top of API secret key
    */
   def signature(feed: Feed): String = {
-    val digest = hmac(feed.feedSlug + feed.feedSlug, hashedKey)
+    val digest = hmac(feed.feedSlug + feed.feedId, hashedKey)
     safeB64encode(digest).trim
   }
 
