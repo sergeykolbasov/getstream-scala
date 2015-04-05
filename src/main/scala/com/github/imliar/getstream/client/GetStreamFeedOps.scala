@@ -30,7 +30,7 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
    * Add new activity
    * @return Future containing `Activity` with id, provided by getstream.io
    */
-  def addActivity[T](activity: Activity[T])(implicit m: Manifest[T], bindings: Bindings): Future[Activity[T]] = {
+  def addActivity[T](activity: Activity[T])(implicit m: Manifest[T]): Future[Activity[T]] = {
     //@TODO sign To field
     makeHttpRequest(new URI(""), Post, activity)
   }
@@ -39,7 +39,7 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
    * Add new activities
     @return Future containing sequence of activities with ids, provided by getstream.io
    */
-  def addActivities[T](activities: Seq[Activity[T]])(implicit m: Manifest[T], bindings: Bindings): Future[Seq[Activity[T]]] = {
+  def addActivities[T](activities: Seq[Activity[T]])(implicit m: Manifest[T]): Future[Seq[Activity[T]]] = {
     //@TODO sign To field
     val activitiesMap = Map("activities" -> activities)
     makeHttpRequest(new URI(""), Post, activitiesMap)
@@ -50,7 +50,7 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
    * @param from get activities before this id (using range-based pagination)
    * @param limit limit number of requests
    */
-  def getActivities[T](from: Option[String] = None, limit: Int = 25)(implicit m: Manifest[T], bindings: Bindings): Future[Seq[Activity[T]]] = {
+  def getActivities[T](from: Option[String] = None, limit: Int = 25)(implicit m: Manifest[T]): Future[Seq[Activity[T]]] = {
     val params = limitOffsetParams(from, limit)
     makeHttpRequest(new URI(""), Get, None, params)
   }
@@ -58,7 +58,7 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
   /**
    * Follow provided feed
    */
-  def followFeed(feedToFollow: Feed)(implicit bindings: Bindings, ec: ExecutionContext): Future[Boolean] = {
+  def followFeed(feedToFollow: Feed)(implicit ec: ExecutionContext): Future[Boolean] = {
     val targetSlug = feedToFollow.feedSlug
     val targetId = feedToFollow.feedId
     val targetFeedId = s"$targetSlug:$targetId"
@@ -74,7 +74,7 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
   /**
    * Unfollow provided feed
    */
-  def unfollowFeed(feedToUnfollow: Feed)(implicit bindings: Bindings, ec: ExecutionContext): Future[Boolean] = {
+  def unfollowFeed(feedToUnfollow: Feed)(implicit ec: ExecutionContext): Future[Boolean] = {
     val targetSlug = feedToUnfollow.feedSlug
     val targetId = feedToUnfollow.feedId
     val targetFeed = s"$targetSlug:$targetId"
@@ -87,7 +87,7 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
   /**
    * Get current feed followers
    */
-  def followers(offset: Option[String], limit: Int = 25)(implicit bindings: Bindings): Future[MResponse] = {
+  def followers(offset: Option[String], limit: Int = 25): Future[MResponse] = {
     val params = limitOffsetParams(offset, limit)
     makeHttpRequest[No, MResponse](new URI("followers"), Get, None, params)
   }
@@ -95,7 +95,7 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
   /**
    * Get list of following feeds
    */
-  def following(offset: Option[String], limit: Int = 25)(implicit bindings: Bindings): Future[MResponse] = {
+  def following(offset: Option[String], limit: Int = 25): Future[MResponse] = {
     val params = limitOffsetParams(offset, limit)
     makeHttpRequest[No, MResponse](new URI("followers"), Get, None, params)
   }
@@ -103,7 +103,7 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
   /**
    * Drop current feed
    */
-  def deleteFeed()(implicit bindings: Bindings): Future[MResponse] = {
+  def deleteFeed(): Future[MResponse] = {
     makeHttpRequest[No, MResponse](new URI(""), Delete, None)
   }
 

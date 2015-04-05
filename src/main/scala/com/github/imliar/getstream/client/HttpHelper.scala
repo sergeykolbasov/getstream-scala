@@ -16,11 +16,11 @@ import scala.util.{Success, Try}
 trait HttpHelper {
   self: Injectable with GetStreamFeedOps =>
 
-  private val serializer = bindings.serializer
-  private val httpClient = bindings.httpClient
-  private val httpTimeout = bindings.httpTimeout
-  private val config = bindings.config
-  private val signer = bindings.signer
+  private def serializer = bindings.serializer
+  private def httpClient = bindings.httpClient
+  private def httpTimeout = bindings.httpTimeout
+  private def config = bindings.config
+  private def signer = bindings.signer
 
   /**
    * Do request to getstream.io and await response of type T within given timeout
@@ -65,7 +65,7 @@ trait HttpHelper {
 
     val location = config.getString("getstream.http.location")
     val host = config.getString("getstream.http.host")
-    val apiKey = config.getString("getstream.api.apiKey")
+    val apiKey = config.getString("getstream.api.key")
 
     val path = Some(uri.getPath).filter(_.nonEmpty).map("/" + _ + "/").getOrElse("")
 
@@ -73,7 +73,7 @@ trait HttpHelper {
     builder
       .setScheme("https")
       .setHost(s"$location.$host")
-      .setPath(s"api/feed/${feed.feedSlug}/${feed.feedId}$path")
+      .setPath(s"/api/feed/${feed.feedSlug}/${feed.feedId}$path")
 
     builder.addParameters(params)
     builder.addParameter("api_key", apiKey)
