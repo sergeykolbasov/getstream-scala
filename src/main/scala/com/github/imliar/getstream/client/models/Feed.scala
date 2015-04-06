@@ -11,3 +11,10 @@ case class Feed(feedId: String, feedSlug: String)
 trait Tokenized {
   val token: String
 }
+
+object Feed {
+  def apply(desc: String): Feed = {
+    val split = desc.split(":")
+    Feed(split.tail.mkString(":"), split.head)
+  }
+}

@@ -82,4 +82,13 @@ class FeedOpsIntegrationSpecs extends FlatSpec with Matchers with ScalaFutures {
 
     activitiesWithId.map{ _.map (_.copy(id = None)) }.futureValue shouldBe activities
   }
+
+  it should "add activity to targeted feeds" in {
+    val feed = randomUserFeed
+    val mentionedFeed = randomUserFeed
+    val activity = randomActivity.copy[String](to = Seq(mentionedFeed))
+
+    val activityWithId = client(feed).addActivity(activity)
+    client(mentionedFeed).getActivities[String]().map(_.headOption).futureValue shouldBe Some(activityWithId.futureValue)
+  }
 }

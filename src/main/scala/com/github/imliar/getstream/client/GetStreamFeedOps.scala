@@ -2,7 +2,7 @@ package com.github.imliar.getstream.client
 
 import java.net.URI
 
-import com.github.imliar.getstream.client.models.{MultipleActivities, ResultsResponse, Activity, Feed}
+import com.github.imliar.getstream.client.models._
 import com.twitter.finagle.httpx.Method.{Delete, Get, Post}
 import org.apache.http.message.BasicNameValuePair
 
@@ -32,7 +32,7 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
    */
   def addActivity[T](activity: Activity[T])(implicit m: Manifest[T]): Future[Activity[T]] = {
     //@TODO sign To field
-    makeHttpRequest[Activity[T], Activity[T]](new URI(""), Post, activity)
+    makeHttpRequest[Activity[T], Activity[T]](new URI(""), Post, signActivityTo(activity))
   }
 
   /**
@@ -41,7 +41,7 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
    */
   def addActivities[T](activities: Seq[Activity[T]])(implicit m: Manifest[T], ec: ExecutionContext): Future[Seq[Activity[T]]] = {
     //@TODO sign To field
-    val activitiesMap = Map("activities" -> activities)
+    val activitiesMap = Map("activities" -> activities.map(signActivityTo))
     type ReqType = Map[String, Seq[Activity[T]]]
     makeHttpRequest[ReqType, MultipleActivities[T]](new URI(""), Post, activitiesMap) map { _.activities }
   }
@@ -94,7 +94,7 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
     type ResResponse = ResultsResponse[List[Map[String, String]]]
     makeHttpRequest[No, ResResponse](new URI("followers"), Get, None, params) map { response =>
       response.results.map { row =>
-        feedDescriptor(row get "feed_id")
+        row get "feed_id" map Feed.apply
       }.flatten
     }
   }
@@ -107,7 +107,7 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
     type ResResponse = ResultsResponse[List[Map[String, String]]]
     makeHttpRequest[No, ResResponse](new URI("follows"), Get, None, params) map { response =>
       response.results.map { row =>
-        feedDescriptor(row get "target_id")
+        row get "target_id" map Feed.apply
       }.flatten
     }
   }
@@ -129,18 +129,12 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
     params.flatten
   }
 
-  /**
-   * Read feed string to `Feed` object
-   */
-  protected def feedDescriptor(toDescript: Option[String]): Option[Feed] = {
-    toDescript.map { string =>
-      val delimeter = ":"
-      val feedDescr = string.split(delimeter)
-      val feedSlug = feedDescr.head
-      val feedId = feedDescr.tail.mkString(delimeter)
-
-      Feed(feedId, feedSlug)
+  protected def signActivityTo[T](activity: Activity[T]): Activity[T] = {
+    val signed = activity.to.map { feed =>
+      new Feed(feed.feedId, feed.feedSlug) with Tokenized {
+        val token = bindings.signer signature feed
+      }
     }
+    activity.copy(to = signed)
   }
-
 }
