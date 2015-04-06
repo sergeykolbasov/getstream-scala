@@ -6,7 +6,6 @@ import com.twitter.finagle.Service
 import com.twitter.finagle.builder.ClientBuilder
 import com.twitter.finagle.httpx.{Http, Request, Response}
 import com.twitter.finagle.service.RetryPolicy
-import com.twitter.util.Duration
 import com.typesafe.config.{Config, ConfigFactory}
 
 /**
@@ -16,13 +15,11 @@ import com.typesafe.config.{Config, ConfigFactory}
  * It has predefined values and ready to work, but its easy to override them on/after instantiation
  *
  * @param config Config with required values (api key, token)
- * @param httpTimeout Max timeout for HTTP request
  * @param httpClient HTTP Client
  * @param ops Feed operations implementation
  * @param serializer Request/Response JSON serializer
  */
 case class GetStreamClient(config: Config = DefaultValues.defaultConfig,
-                           httpTimeout: Duration = 30.seconds,
                            httpClient: Config => HttpClient = DefaultValues.defaultHttpClient,
                            ops: Feed => Bindings => GetStreamFeedOps = DefaultValues.defaultOps,
                            serializer: GetStreamSerializer = GetStreamDefaultSerializer) { self =>
@@ -35,7 +32,6 @@ case class GetStreamClient(config: Config = DefaultValues.defaultConfig,
     override val config: Config = self.config
     override val httpClient: HttpClient = self.httpClient(config)
     override val serializer: GetStreamSerializer = self.serializer
-    override val httpTimeout: Duration = self.httpTimeout
     override val signer: GetStreamSign = new GetStreamSign(config getString "getstream.api.secret")
   }
 
@@ -87,7 +83,8 @@ object DefaultValues {
       "getstream.http.connectionLimit" -> "10",
       "getstream.http.retries" -> "3",
       "getstream.http.host" -> "getstream.io",
-      "getstream.http.location" -> "eu-west-api"
+      "getstream.http.location" -> "eu-west-api",
+      "getstream.http.timeout" -> "30"
     ))
   }
 
@@ -99,11 +96,13 @@ object DefaultValues {
 
     val retries = withFallback.getInt("getstream.http.retries")
     val connectionLimit = withFallback.getInt("getstream.http.connectionLimit")
+    val timeout = withFallback.getInt("getstream.http.timeout").seconds
 
     ClientBuilder()
       .codec(Http())
       .tls(host)
       .hosts(s"$location.$host:443")
+      .timeout(timeout)
       .hostConnectionLimit(connectionLimit)
       .retryPolicy(RetryPolicy.tries(retries, RetryPolicy.ChannelClosedExceptionsOnly))
       .build()

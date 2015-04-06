@@ -1,6 +1,6 @@
 package com.github.imliar.getstream.client
 
-import com.github.imliar.getstream.client.models.Feed
+import com.github.imliar.getstream.client.models.{Activity, Feed}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.concurrent.{ScalaFutures, Futures}
 import org.scalatest.time.{Millis, Seconds, Span}
@@ -31,6 +31,14 @@ class FeedOpsIntegrationSpecs extends FlatSpec with Matchers with ScalaFutures {
     true
   }
 
+  def randomActivity: Activity[String] = {
+    Activity(
+      actor = "actor",
+      verb = "verb",
+      `object` = randomUUID.toString
+    )
+  }
+
   "FeedOps" should "get empty activities from new feed" in {
     val feed = randomUserFeed
 
@@ -54,5 +62,24 @@ class FeedOpsIntegrationSpecs extends FlatSpec with Matchers with ScalaFutures {
 
     opsFollower.following().futureValue.size shouldBe 0
     opsFollowing.followers().futureValue.size shouldBe 0
+  }
+
+  it should "add single activity and get it back" in {
+    val feed = randomUserFeed
+    val activity = randomActivity
+
+    val activityWithId = client(feed).addActivity(activity)
+
+    activityWithId.map(_.id.nonEmpty).futureValue shouldBe true
+    activityWithId.map(_.copy(id = None)).futureValue shouldBe activity
+  }
+
+  it should "add multiple activities and get em back" in {
+    val feed = randomUserFeed
+    val activities = for(i <- 1 to 10) yield randomActivity
+
+    val activitiesWithId = client(feed).addActivities(activities)
+
+    activitiesWithId.map{ _.map (_.copy(id = None)) }.futureValue shouldBe activities
   }
 }

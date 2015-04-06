@@ -9,16 +9,16 @@ import com.twitter.io.Buf.ByteArray
 import com.twitter.util.JavaTimer
 import org.apache.http.client.utils.URIBuilder
 import org.apache.http.message.BasicNameValuePair
-
+import com.twitter.conversions.time._
 import scala.concurrent.Future
-import scala.util.{Success, Try}
+import scala.util.{Failure, Success, Try}
 
 trait HttpHelper {
   self: Injectable with GetStreamFeedOps =>
 
   private def serializer = bindings.serializer
   private def httpClient = bindings.httpClient
-  private def httpTimeout = bindings.httpTimeout
+  private def httpTimeout = config.getInt("getstream.http.timeout").seconds
   private def config = bindings.config
   private def signer = bindings.signer
 
@@ -52,7 +52,9 @@ trait HttpHelper {
       val content = response.contentString
       Try(serializer.deserialize[T](content)) match {
         case Success(result) => result
-        case _ => throw new GetStreamParseException(uri, method.toString, content)
+        case Failure(e) => {
+          throw new GetStreamParseException(uri, method.toString, content, e)
+        }
       }
     }.asScala
   }

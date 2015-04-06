@@ -2,7 +2,7 @@ package com.github.imliar.getstream.client
 
 import java.net.URI
 
-import com.github.imliar.getstream.client.models.{ResultsResponse, Activity, Feed}
+import com.github.imliar.getstream.client.models.{MultipleActivities, ResultsResponse, Activity, Feed}
 import com.twitter.finagle.httpx.Method.{Delete, Get, Post}
 import org.apache.http.message.BasicNameValuePair
 
@@ -32,17 +32,18 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
    */
   def addActivity[T](activity: Activity[T])(implicit m: Manifest[T]): Future[Activity[T]] = {
     //@TODO sign To field
-    makeHttpRequest(new URI(""), Post, activity)
+    makeHttpRequest[Activity[T], Activity[T]](new URI(""), Post, activity)
   }
 
   /**
    * Add new activities
     @return Future containing sequence of activities with ids, provided by getstream.io
    */
-  def addActivities[T](activities: Seq[Activity[T]])(implicit m: Manifest[T]): Future[Seq[Activity[T]]] = {
+  def addActivities[T](activities: Seq[Activity[T]])(implicit m: Manifest[T], ec: ExecutionContext): Future[Seq[Activity[T]]] = {
     //@TODO sign To field
     val activitiesMap = Map("activities" -> activities)
-    makeHttpRequest(new URI(""), Post, activitiesMap)
+    type ReqType = Map[String, Seq[Activity[T]]]
+    makeHttpRequest[ReqType, MultipleActivities[T]](new URI(""), Post, activitiesMap) map { _.activities }
   }
 
   /**
@@ -128,6 +129,9 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
     params.flatten
   }
 
+  /**
+   * Read feed string to `Feed` object
+   */
   protected def feedDescriptor(toDescript: Option[String]): Option[Feed] = {
     toDescript.map { string =>
       val delimeter = ":"

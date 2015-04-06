@@ -8,7 +8,6 @@ trait Bindings {
   val httpClient: HttpClient
   val config: Config
   val serializer: GetStreamSerializer
-  val httpTimeout: Duration
   val signer: GetStreamSign
 
 }
