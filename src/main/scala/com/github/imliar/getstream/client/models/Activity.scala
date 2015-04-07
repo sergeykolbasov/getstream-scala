@@ -13,5 +13,5 @@ case class Activity[T](
   target: Option[String] = None,
   time: Option[DateTime] = None,
   to: Seq[Feed] = Seq.empty,
-  foreign_id: Option[String] = None
+  foreignId: Option[String] = None
 )

@@ -2,6 +2,7 @@ package com.github.imliar.getstream.client
 
 import com.github.imliar.getstream.client.models.{Activity, Feed}
 import com.typesafe.config.ConfigFactory
+import org.joda.time.DateTime
 import org.scalatest.concurrent.{ScalaFutures, Futures}
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{Matchers, FlatSpec}
@@ -88,7 +89,8 @@ class FeedOpsIntegrationSpecs extends FlatSpec with Matchers with ScalaFutures {
     val mentionedFeed = randomUserFeed
     val activity = randomActivity.copy[String](to = Seq(mentionedFeed))
 
-    val activityWithId = client(feed).addActivity(activity)
-    client(mentionedFeed).getActivities[String]().map(_.headOption).futureValue shouldBe Some(activityWithId.futureValue)
+    val activityWithId = client(feed).addActivity(activity).futureValue
+    val activityFromFeed = client(mentionedFeed).getActivities[String]().map(_.headOption).futureValue
+    activityFromFeed shouldBe Some(activityWithId)
   }
 }
