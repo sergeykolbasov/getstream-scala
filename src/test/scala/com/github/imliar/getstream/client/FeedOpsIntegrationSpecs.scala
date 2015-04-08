@@ -1,10 +1,8 @@
 package com.github.imliar.getstream.client
 
-import com.github.imliar.getstream.client.exceptions.GetStreamParseException
 import com.github.imliar.getstream.client.models.{Activity, Feed}
 import com.typesafe.config.ConfigFactory
-import org.joda.time.DateTime
-import org.scalatest.concurrent.{ScalaFutures, Futures}
+import org.scalatest.concurrent.{ScalaFutures}
 import org.scalatest.time.{Millis, Seconds, Span}
 import org.scalatest.{Matchers, FlatSpec}
 import java.util.UUID.randomUUID
@@ -74,6 +72,16 @@ class FeedOpsIntegrationSpecs extends FlatSpec with Matchers with ScalaFutures {
 
     activityWithId.map(_.id.nonEmpty).futureValue shouldBe true
     activityWithId.map(_.copy(id = None)).futureValue shouldBe activity
+  }
+
+  it should "remove activity from feed" in {
+    val feed = randomUserFeed
+    val activity = randomActivity
+
+    val activityWithId = client(feed).addActivity(activity).futureValue
+
+    client(feed).removeActivity(activityWithId).futureValue shouldBe true
+    client(feed).getActivities[String]().futureValue shouldBe Seq.empty
   }
 
   it should "add multiple activities and get em back" in {

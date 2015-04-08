@@ -31,8 +31,24 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
    * @return Future containing `Activity` with id, provided by getstream.io
    */
   def addActivity[T](activity: Activity[T])(implicit m: Manifest[T]): Future[Activity[T]] = {
-    //@TODO sign To field
     makeHttpRequest[Activity[T], Activity[T]](new URI(""), Post, signActivityTo(activity))
+  }
+
+  /**
+   * Remove activity from feed
+   */
+  def removeActivity[T](activity: Activity[T])(implicit ec: ExecutionContext): Future[Boolean] = {
+    assert(activity.id.isDefined, "Activity id should be defined!")
+    removeActivity(activity.id.get)
+  }
+
+  /**
+   * Remove activity from feed by its id
+   */
+  def removeActivity(activityId: String)(implicit ec: ExecutionContext): Future[Boolean] = {
+    makeHttpRequest[No, MResponse](new URI(activityId), Delete, None).map {
+      _.contains("duration")
+    }
   }
 
   /**
@@ -40,7 +56,6 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
     @return Future containing sequence of activities with ids, provided by getstream.io
    */
   def addActivities[T](activities: Seq[Activity[T]])(implicit m: Manifest[T], ec: ExecutionContext): Future[Seq[Activity[T]]] = {
-    //@TODO sign To field
     val activitiesMap = Map("activities" -> activities.map(signActivityTo))
     type ReqType = Map[String, Seq[Activity[T]]]
     makeHttpRequest[ReqType, MultipleActivities[T]](new URI(""), Post, activitiesMap) map { _.activities }

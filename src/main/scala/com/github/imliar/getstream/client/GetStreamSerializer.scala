@@ -1,16 +1,11 @@
 package com.github.imliar.getstream.client
 
 import com.github.imliar.getstream.client.models._
-import org.joda.time.DateTime
 import org.json4s
-import org.json4s.JsonAST.JValue
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.ext._
 import org.json4s.jackson.Serialization.write
-import org.json4s.JsonDSL._
-
-import scala.util.{Failure, Success, Try}
 
 trait GetStreamSerializer {
 
