@@ -3,7 +3,7 @@ package com.github.imliar.getstream.client.models
 /**
  * Basic feed
  */
-case class Feed(feedId: String, feedSlug: String)
+case class Feed(feedSlug: String, feedId: String)
 
 /**
  * Mixin applied to `Feed` only when its signed with API secret
@@ -15,6 +15,6 @@ trait Tokenized {
 object Feed {
   def apply(desc: String): Feed = {
     val split = desc.split(":")
-    Feed(split.tail.mkString(":"), split.head)
+    Feed(split.head, split.tail.mkString(":"))
   }
 }

@@ -1,5 +1,6 @@
 package com.github.imliar.getstream.client
 
+import com.github.imliar.getstream.client.exceptions.GetStreamParseException
 import com.github.imliar.getstream.client.models.{Activity, Feed}
 import com.typesafe.config.ConfigFactory
 import org.joda.time.DateTime
@@ -15,7 +16,7 @@ class FeedOpsIntegrationSpecs extends FlatSpec with Matchers with ScalaFutures {
 
   val client = GetStreamClient(ConfigFactory.load())
 
-  def randomFeed(slug: String) = Feed(randomUUID.toString, slug)
+  def randomFeed(slug: String) = Feed(slug, randomUUID.toString)
   def randomUserFeed = randomFeed("user")
 
   def followFeed(follower: Feed, following: Feed): Boolean = {
@@ -90,6 +91,7 @@ class FeedOpsIntegrationSpecs extends FlatSpec with Matchers with ScalaFutures {
     val activity = randomActivity.copy[String](to = Seq(mentionedFeed))
 
     val activityWithId = client(feed).addActivity(activity).futureValue
+
     val activityFromFeed = client(mentionedFeed).getActivities[String]().map(_.headOption).futureValue
     activityFromFeed shouldBe Some(activityWithId)
   }

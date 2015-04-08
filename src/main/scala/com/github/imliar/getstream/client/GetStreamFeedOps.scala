@@ -131,7 +131,7 @@ trait GetStreamFeedOps extends HttpHelper { self: Injectable =>
 
   protected def signActivityTo[T](activity: Activity[T]): Activity[T] = {
     val signed = activity.to.map { feed =>
-      new Feed(feed.feedId, feed.feedSlug) with Tokenized {
+      new Feed(feed.feedSlug, feed.feedId) with Tokenized {
         val token = bindings.signer signature feed
       }
     }
