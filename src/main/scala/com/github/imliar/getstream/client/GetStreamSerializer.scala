@@ -7,6 +7,9 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.ext._
 import org.json4s.jackson.Serialization.write
 
+/**
+ * Serializer for requests/responses to GetStream
+ */
 trait GetStreamSerializer {
 
   def serialize[A <: AnyRef](a: A)(implicit m: Manifest[A]): String
@@ -15,6 +18,9 @@ trait GetStreamSerializer {
 
 }
 
+/**
+ * Default serializer uses json4s
+ */
 object GetStreamDefaultSerializer extends GetStreamSerializer {
 
   private implicit val formats = DefaultFormats ++ JodaTimeSerializers.all + FeedSerializer
@@ -28,6 +34,9 @@ object GetStreamDefaultSerializer extends GetStreamSerializer {
     json.extract[A]
   }
 
+  /**
+   * Feed depends on its own serialization since getstream operates with slug:id string format
+   */
   object FeedSerializer extends Serializer[Feed] {
     import DefaultReaders._
 
@@ -48,61 +57,4 @@ object GetStreamDefaultSerializer extends GetStreamSerializer {
     }
   }
 
-  /*
-  private def serializeFeeds(feeds: Seq[Feed]): Seq[String] = {
-    feeds map {
-      case ft: Feed with Tokenized => s"${ft.feedSlug}:${ft.feedId} ${ft.token}"
-      case Feed(feedId, feedSlug) => s"$feedSlug:$feedId"
-    }
-  }
-
-  class ActivitySerializer[T](man: Manifest[T]) extends Serializer[Activity[T]] {
-
-    import DefaultReaders._
-    private val ActivityClass = classOf[Activity[T]]
-
-    override def deserialize(implicit format: Formats): PartialFunction[(TypeInfo, json4s.JValue), Activity[T]] = {
-      case (TypeInfo(ActivityClass, _), json) =>
-        Try(
-          json match {
-            case jObject: JObject => {
-              val id = (json \ "id").as[String]
-              val actor = (json \ "actor").as[String]
-              val verb = (json \ "verb").as[String]
-              val to = (json \ "to").as[Seq[String]]
-              val `object` = (json \ "object").extract[T](format, man)
-              val target = json \ "target" match {
-                case JNull | JNothing => None
-                case JString(str) => Some(str)
-              }
-              val time = json \ "time" match {
-                case JNull | JNothing => None
-                case JString(t) => Some(DateTime.parse(t))
-              }
-              val foreignId = json \ "foreign_id" match {
-                case JNull | JNothing => None
-                case JString(str) => Some(str)
-              }
-              val toSeq = to map Feed.apply
-              Activity(Some(id), actor, verb, `object`, target, time, toSeq, foreignId)
-            }
-          }
-        ) match {
-          case Success(r) => {
-            r
-          }
-          case Failure(e) => {
-            throw e
-          }
-        }
-    }
-
-    override def serialize(implicit format: Formats): PartialFunction[Any, json4s.JValue] = {
-      case act: Activity[T] => {
-        val feeds = serializeFeeds(act.to)
-        ("id" -> act.id) ~ ("actor" -> act.actor) ~ ("verb" -> act.verb) ~ ("object" -> Extraction.decompose(act.`object`)) ~
-          ("target" -> act.target) ~ ("time" -> Extraction.decompose(act.time)) ~ ("to" -> feeds) ~ ("foreign_id" -> act.foreignId)
-      }
-    }
-  }*/
 }

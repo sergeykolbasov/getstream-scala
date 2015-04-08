@@ -13,6 +13,9 @@ trait Tokenized {
 }
 
 object Feed {
+  /**
+   * Build Feed object from slug:id string
+   */
   def apply(desc: String): Feed = {
     val split = desc.split(":")
     Feed(split.head, split.tail.mkString(":"))

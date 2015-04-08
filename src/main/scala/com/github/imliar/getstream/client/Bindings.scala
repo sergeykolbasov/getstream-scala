@@ -1,8 +1,10 @@
 package com.github.imliar.getstream.client
 
-import com.twitter.util.Duration
 import com.typesafe.config.Config
 
+/**
+ * Bindings container
+ */
 trait Bindings {
 
   val httpClient: HttpClient

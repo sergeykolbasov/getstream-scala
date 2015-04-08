@@ -13,6 +13,9 @@ import com.twitter.conversions.time._
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 
+/**
+ * Mixin for http requests
+ */
 trait HttpHelper {
   self: Injectable with GetStreamFeedOps =>
 
